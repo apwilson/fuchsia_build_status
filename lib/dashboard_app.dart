@@ -13,9 +13,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:ui' as ui;
 
-enum BuildStatus {
-  UNKNOWN, NETWORKERROR, PARSEERROR, SUCCESS, FAILURE
-}
+enum BuildStatus { UNKNOWN, NETWORKERROR, PARSEERROR, SUCCESS, FAILURE }
 
 // ----------------------------------------------------------------------------
 // EDIT BELOW TO ADD configs
@@ -54,20 +52,12 @@ var targets_map = {
   ]
 };
 
-
 class DashboardApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new MaterialApp(
       title: 'Fuchsia Build Status',
       theme: new ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting
-        // the app, try changing the primarySwatch below to Colors.green
-        // and press "r" in the console where you ran "flutter run".
-        // We call this a "hot reload". 
         primarySwatch: Colors.blue,
       ),
       home: new DashboardPage(title: 'Fuchsia Build Status'),
@@ -77,15 +67,6 @@ class DashboardApp extends StatelessWidget {
 
 class DashboardPage extends StatefulWidget {
   DashboardPage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful,
-  // meaning that it has a State object (defined below) that contains
-  // fields that affect how it looks.
-
-  // This class is the configuration for the state. It holds the
-  // values (in this case the title) provided by the parent (in this
-  // case the App widget) and used by the build method of the State.
-  // Fields in a Widget subclass are always marked "final".
 
   final String title;
 
@@ -99,25 +80,27 @@ class _DashboardPageState extends State<DashboardPage> {
   Timer _refresh_timer;
   DateTime _start_time = new DateTime.now();
 
-
   @override
   initState() {
     // From the targets map, create a data structure which we'll be populating
     // the build results into, as they come in async.
     targets_results = new Map();
 
-    targets_map.forEach((categoryName,buildConfigs) {
-        var this_map = new Map<String, BuildInfo>();
-        for(var config in buildConfigs) {
-         this_map[config[1]] = new BuildInfo(
-            status: BuildStatus.UNKNOWN,
-            url: "http://www.google.com"
-          );
-        }
-        targets_results[categoryName] = this_map;
-      });
+    targets_map.forEach((categoryName, buildConfigs) {
+      var this_map = new Map<String, BuildInfo>();
+      for (var config in buildConfigs) {
+        this_map[config[1]] = new BuildInfo(
+          status: BuildStatus.UNKNOWN,
+          url: "http://www.google.com",
+        );
+      }
+      targets_results[categoryName] = this_map;
+    });
 
-    _refresh_timer = new Timer.periodic(const Duration(seconds: 60), _refreshTimerFired);
+    _refresh_timer = new Timer.periodic(
+      const Duration(seconds: 60),
+      _refreshTimerFired,
+    );
     _refreshStatus();
   }
 
@@ -127,10 +110,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Refresh status an ALL builds.
   void _refreshStatus() {
-
     // fetch config status for ONE item.
     _fetchConfigStatus(categoryName, buildName, url) async {
-
       BuildStatus status = BuildStatus.PARSEERROR;
       String html = null;
 
@@ -138,21 +119,19 @@ class _DashboardPageState extends State<DashboardPage> {
         var response = await http.get(url);
         html = response.body;
       } catch (error) {
-          status = BuildStatus.NETWORKERROR;
+        status = BuildStatus.NETWORKERROR;
       }
 
       if (html == null) {
         status = BuildStatus.NETWORKERROR;
       } else {
-
         var dom_tree = parse(html);
         List<dom.Element> trs = dom_tree.querySelectorAll('tr');
         for (var tr in trs) {
-            if (tr.className == "danger") {
+          if (tr.className == "danger") {
             status = BuildStatus.FAILURE;
             break;
-          }
-          else if (tr.className == "success") {
+          } else if (tr.className == "success") {
             status = BuildStatus.SUCCESS;
             break;
           }
@@ -161,25 +140,22 @@ class _DashboardPageState extends State<DashboardPage> {
 
       targets_results['${categoryName}']['${buildName}'].status = status;
       targets_results['${categoryName}']['${buildName}'].url = url;
-      setState( () {} );
-
+      setState(() {});
     } // _fetchConfigStatus
 
-    // kick off requests for all the build configs desired. As 
+    // kick off requests for all the build configs desired. As
     // these reults come in they will be stuffed into the targets_results map.
-    targets_map.forEach((categoryName, buildConfigs){
-        for(var config in buildConfigs) {
-          String url = kBaseURL + config[0];
-          _fetchConfigStatus(categoryName, config[1], url);
-        }
-      }); // targets_forEach
-
+    targets_map.forEach((categoryName, buildConfigs) {
+      for (var config in buildConfigs) {
+        String url = kBaseURL + config[0];
+        _fetchConfigStatus(categoryName, config[1], url);
+      }
+    }); // targets_forEach
   } // _refreshStatus
 
   void _launchUrl(String url) {
     UrlLauncher.launch(url);
   }
-
 
   Color _colorFromBuildStatus(BuildStatus status) {
     switch (status) {
@@ -195,22 +171,28 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildResultWidget(String name, BuildInfo bi) {
-    return new Expanded( child: new GestureDetector(
-      onTap: () {
-        _launchUrl(bi.url);
-      },
-      child:
-        new Container(
-          decoration: new BoxDecoration(backgroundColor: _colorFromBuildStatus(bi.status)),
-          padding: const EdgeInsets.symmetric(vertical:16.0, horizontal: 4.0),
+    return new Expanded(
+      child: new GestureDetector(
+        onTap: () {
+          _launchUrl(bi.url);
+        },
+        child: new Container(
+          decoration: new BoxDecoration(
+            backgroundColor: _colorFromBuildStatus(bi.status),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 4.0),
           margin: const EdgeInsets.fromLTRB(0.0, 8.0, 8.0, 8.0),
-            child: new Text(name,
-            style:new TextStyle(color:Colors.black, fontSize:12.0)),
-        )) );
+          child: new Text(
+            name,
+            style: new TextStyle(color: Colors.black, fontSize: 12.0),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance
     // as done by the _refreshStatus method above.
 
@@ -225,50 +207,50 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildLandcape(BuildContext context) {
-
     var rows = new List();
 
     Duration uptime = new DateTime.now().difference(_start_time);
 
     rows.add(
       new Container(
-        child: new Text("${uptime.inDays}d ${uptime.inHours % 24}h ${uptime.inMinutes % 60}m uptime", 
-              style: new TextStyle(fontSize:11.0)
-          )
-        )
-      );
+        child: new Text(
+          "${uptime.inDays}d ${uptime.inHours % 24}h ${uptime.inMinutes % 60}m uptime",
+          style: new TextStyle(fontSize: 11.0),
+        ),
+      ),
+    );
 
-    targets_results.forEach((k,v) {
-
-        // the builds
-        var builds = new List();
-        v.forEach((name, status_obj) {
-          builds.add(_buildResultWidget("${k}\n${name}",status_obj));
-        });
-
-        rows.add(new Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.max,
-              children:builds));
+    targets_results.forEach((k, v) {
+      // the builds
+      var builds = new List();
+      v.forEach((name, status_obj) {
+        builds.add(_buildResultWidget("${k}\n${name}", status_obj));
       });
 
+      rows.add(
+        new Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.max,
+          children: builds,
+        ),
+      );
+    });
 
     return new Scaffold(
       appBar: new AppBar(
-      title: new Text('Fuchsia Build Status'),
+        title: new Text('Fuchsia Build Status'),
       ),
-      body: new Container( 
+      body: new Container(
         //padding: new EdgeInsets.all(20.0),
-        child: new Column (
+        child: new Column(
           children: rows,
-        ), ),
-
+        ),
+      ),
       floatingActionButton: new FloatingActionButton(
         onPressed: _refreshStatus,
         tooltip: 'Increment',
         child: new Icon(Icons.refresh),
-      ), // This trailing comma tells the Dart formatter to use
-      // a style that looks nicer for build methods.
+      ),
     );
   }
 }
