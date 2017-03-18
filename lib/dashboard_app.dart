@@ -27,28 +27,29 @@ class BuildInfo {
   BuildInfo({this.status, this.url});
 }
 
-var targets_map = {
-  'fuchsia': [
-    ['fuchsia/linux-x86-64-debug', 'linux-x86-64-debug'],
-    ['fuchsia/linux-arm64-debug', 'linux-arm64-debug'],
-    ['fuchsia/linux-x86-64-release', 'linux-x86-64-release'],
-    ['fuchsia/linux-arm64-release', 'linux-arm64-release'],
+const Map<String, List<List<String>>> targets_map =
+    const <String, List<List<String>>>{
+  'fuchsia': const [
+    const ['fuchsia/linux-x86-64-debug', 'linux-x86-64-debug'],
+    const ['fuchsia/linux-arm64-debug', 'linux-arm64-debug'],
+    const ['fuchsia/linux-x86-64-release', 'linux-x86-64-release'],
+    const ['fuchsia/linux-arm64-release', 'linux-arm64-release'],
   ],
-  'fuchsia-drivers': [
-    ['fuchsia/drivers-linux-x86-64-debug', 'linux-x86-64-debug'],
-    ['fuchsia/drivers-linux-arm64-debug', 'linux-arm64-debug'],
-    ['fuchsia/drivers-linux-x86-64-release', 'linux-x86-64-release'],
-    ['fuchsia/drivers-linux-arm64-release', 'linux-arm64-release'],
+  'fuchsia-drivers': const [
+    const ['fuchsia/drivers-linux-x86-64-debug', 'linux-x86-64-debug'],
+    const ['fuchsia/drivers-linux-arm64-debug', 'linux-arm64-debug'],
+    const ['fuchsia/drivers-linux-x86-64-release', 'linux-x86-64-release'],
+    const ['fuchsia/drivers-linux-arm64-release', 'linux-arm64-release'],
   ],
-  'magenta': [
-    ['magenta/arm64-linux-gcc', 'arm64-linux-gcc'],
-    ['magenta/x86-64-linux-gcc', 'x86-64-linux-gcc'],
-    ['magenta/arm64-linux-clang', 'arm64-linux-clang'],
-    ['magenta/x86-64-linux-clang', 'x86-64-linux-clang'],
+  'magenta': const [
+    const ['magenta/arm64-linux-gcc', 'arm64-linux-gcc'],
+    const ['magenta/x86-64-linux-gcc', 'x86-64-linux-gcc'],
+    const ['magenta/arm64-linux-clang', 'arm64-linux-clang'],
+    const ['magenta/x86-64-linux-clang', 'x86-64-linux-clang'],
   ],
-  'jiri': [
-    ['jiri/linux-x86-64', 'linux-x86-64'],
-    ['jiri/mac-x86-64', 'mac-x86-64'],
+  'jiri': const [
+    const ['jiri/linux-x86-64', 'linux-x86-64'],
+    const ['jiri/mac-x86-64', 'mac-x86-64'],
   ]
 };
 
@@ -160,7 +161,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Color _colorFromBuildStatus(BuildStatus status) {
     switch (status) {
       case BuildStatus.SUCCESS:
-        return Colors.green[100];
+        return Colors.green[300];
       case BuildStatus.FAILURE:
         return Colors.red[400];
       case BuildStatus.NETWORKERROR:
@@ -170,22 +171,41 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  Widget _buildResultWidget(String name, BuildInfo bi) {
+  Widget _buildResultWidget(String type, String name, BuildInfo bi) {
     return new Expanded(
       child: new GestureDetector(
         onTap: () {
           _launchUrl(bi.url);
         },
         child: new Container(
-          decoration: new BoxDecoration(
-            backgroundColor: _colorFromBuildStatus(bi.status),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 4.0),
-          margin: const EdgeInsets.fromLTRB(0.0, 8.0, 8.0, 8.0),
-          child: new Text(
-            name,
-            style: new TextStyle(color: Colors.black, fontSize: 12.0),
-          ),
+          color: _colorFromBuildStatus(bi.status),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          margin: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+          child: new Center(
+              child: new Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              new Text(
+                type,
+                textAlign: TextAlign.center,
+                style: new TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w300,
+                  fontSize: 14.0,
+                ),
+              ),
+              new Container(height: 4.0),
+              new Text(
+                name,
+                textAlign: TextAlign.center,
+                style: new TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14.0,
+                ),
+              ),
+            ],
+          )),
         ),
       ),
     );
@@ -213,9 +233,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
     rows.add(
       new Container(
-        child: new Text(
-          "${uptime.inDays}d ${uptime.inHours % 24}h ${uptime.inMinutes % 60}m uptime",
-          style: new TextStyle(fontSize: 11.0),
+        height: 32.0,
+        child: new Center(
+          child: new Text(
+            "${uptime.inDays}d ${uptime.inHours % 24}h ${uptime.inMinutes % 60}m",
+            textAlign: TextAlign.center,
+            style: new TextStyle(fontSize: 14.0, fontWeight: FontWeight.w500),
+          ),
         ),
       ),
     );
@@ -224,14 +248,20 @@ class _DashboardPageState extends State<DashboardPage> {
       // the builds
       var builds = new List();
       v.forEach((name, status_obj) {
-        builds.add(_buildResultWidget("${k}\n${name}", status_obj));
+        builds.add(_buildResultWidget('$k', '$name', status_obj));
       });
 
       rows.add(
-        new Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          mainAxisSize: MainAxisSize.max,
-          children: builds,
+        new Expanded(
+          child: new Container(
+            margin: const EdgeInsets.only(left: 8.0),
+            child: new Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.max,
+              children: builds,
+            ),
+          ),
         ),
       );
     });
@@ -240,12 +270,7 @@ class _DashboardPageState extends State<DashboardPage> {
       appBar: new AppBar(
         title: new Text('Fuchsia Build Status'),
       ),
-      body: new Container(
-        //padding: new EdgeInsets.all(20.0),
-        child: new Column(
-          children: rows,
-        ),
-      ),
+      body: new Column(children: rows),
       floatingActionButton: new FloatingActionButton(
         onPressed: _refreshStatus,
         tooltip: 'Increment',
