@@ -5,7 +5,7 @@
 import("//flutter/build/flutter_app.gni")
 
 flutter_app("fuchsia_build_status") {
-  main_dart = "lib/modular_main.dart"
+  main_dart = "lib/main.dart"
 
   source_dir = "lib"
 
